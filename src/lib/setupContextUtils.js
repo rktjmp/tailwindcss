@@ -238,6 +238,17 @@ function buildPluginApi(tailwindConfig, context, { variantList, variantMap, offs
 
       return getConfigValue(['variants', path], defaultValue)
     },
+    addUserCss(userCss) {
+      for (let [identifier, rule] of withIdentifiers(userCss)) {
+        let offset = offsets.user++
+
+        if (!context.candidateRuleMap.has(identifier)) {
+          context.candidateRuleMap.set(identifier, [])
+        }
+
+        context.candidateRuleMap.get(identifier).push([{ sort: offset, layer: 'user' }, rule])
+      }
+    },
     addBase(base) {
       for (let [identifier, rule] of withIdentifiers(base)) {
         let prefixedIdentifier = prefixIdentifier(identifier, {})
@@ -441,6 +452,15 @@ function collectLayerPlugins(root) {
     }
   })
 
+  root.walkRules((rule) => {
+    // At this point it is safe to include all the left-over css from the
+    // user's css file. This is because the `@tailwind` and `@layer` directives
+    // will already be handled and will be removed from the css tree.
+    layerPlugins.push(function ({ addUserCss }) {
+      addUserCss(rule, { respectPrefix: false })
+    })
+  })
+
   return layerPlugins
 }
 
@@ -485,6 +505,7 @@ function registerPlugins(plugins, context) {
     base: 0n,
     components: 0n,
     utilities: 0n,
+    user: 0n,
   }
 
   let pluginApi = buildPluginApi(context.tailwindConfig, context, {
@@ -507,6 +528,7 @@ function registerPlugins(plugins, context) {
     offsets.base,
     offsets.components,
     offsets.utilities,
+    offsets.user,
   ])
   let reservedBits = BigInt(highestOffset.toString(2).length)
 
@@ -514,9 +536,10 @@ function registerPlugins(plugins, context) {
     base: (1n << reservedBits) << 0n,
     components: (1n << reservedBits) << 1n,
     utilities: (1n << reservedBits) << 2n,
+    user: (1n << reservedBits) << 3n,
   }
 
-  reservedBits += 3n
+  reservedBits += 4n
 
   let offset = 0
   context.variantOrder = new Map(
