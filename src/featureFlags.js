@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import dlv from 'dlv'
 import chalk from 'chalk'
 import log from './util/log'
 
@@ -9,11 +9,11 @@ const featureFlags = {
 
 export function flagEnabled(config, flag) {
   if (featureFlags.future.includes(flag)) {
-    return config.future === 'all' || _.get(config, ['future', flag], false)
+    return config.future === 'all' || dlv(config, ['future', flag], false)
   }
 
   if (featureFlags.experimental.includes(flag)) {
-    return config.experimental === 'all' || _.get(config, ['experimental', flag], false)
+    return config.experimental === 'all' || dlv(config, ['experimental', flag], false)
   }
 
   return false
@@ -24,7 +24,7 @@ function experimentalFlagsEnabled(config) {
     return featureFlags.experimental
   }
 
-  return Object.keys(_.get(config, 'experimental', {})).filter(
+  return Object.keys(dlv(config, 'experimental', {})).filter(
     (flag) => featureFlags.experimental.includes(flag) && config.experimental[flag]
   )
 }
