@@ -283,6 +283,16 @@ export function asLookupValue(modifier, lookup = {}) {
   return lookup[modifier]
 }
 
+export function asRawValue(modifier) {
+  if (modifier[0] !== '[' || modifier[modifier.length - 1] !== ']') {
+    return undefined
+  }
+
+  let value = modifier.slice(1, -1)
+
+  return value
+}
+
 let typeMap = {
   any: asValue,
   list: asList,
@@ -290,6 +300,7 @@ let typeMap = {
   angle: asAngle,
   length: asLength,
   lookup: asLookupValue,
+  raw: asRawValue,
 }
 
 function splitAtFirst(input, delim) {
